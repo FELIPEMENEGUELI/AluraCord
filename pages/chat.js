@@ -1,6 +1,28 @@
 import { Box, Text, TextField, Image, Button } from '@skynexui/components';
 import React from 'react';
 import appConfig from '../config.json';
+import { createClient } from '@supabase/supabase-js';
+
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTY0NDA3NjU3NSwiZXhwIjoxOTU5NjUyNTc1fQ.Zqh_ictWaU3Nn-CHR6G3zHcUNupu6_aAreQ0PQeNJGQ';
+const SUPABASE_URL = 'https://jbbhftkoumlovpbeppxu.supabase.co';
+const supbabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// fetch('${SUPABASE_URL}/rest/v1)/messages?select=*', { 
+// 	headers: {
+// 		'Content-Tyoe': 'application/json',
+// 		'apikey': supabaseAnonKey,
+// 		'Authorization': 'Bearer ' + supabaseAnKey,
+// 	}
+// })
+
+// .then((res) => { 
+// 	return res.json();
+// })
+
+// .then((response) = > {
+// 	console.log(response);
+// });
+
 
 export default function ChatPage() {
     // Sua lógica vai aqui
@@ -18,19 +40,41 @@ export default function ChatPage() {
     // ./Sua lógica vai aqui
 
     const [mensagem, setMensagem] = React.useState('');
-    const [listaMensagens, setListaMensagens] = React.useState([]);
+    const [listaDeMensagens, setListaDeMensagens] = React.useState([]);
 
+
+    React.useEffect(() =>{
+        const dadosdoSupabase = supbabaseClient
+        .from('mensagens')
+        .select('*')
+        .order('id', {ascending: false })
+        .then(({data}) =>{
+            console.log('Dados da tabela', data)
+            setListaDeMensagens(data);
+        });
+    }, []);
+
+        
     function handleNovaMensagem(novaMensagem){
         const mensagem = {
-            id: listaMensagens.length + 1,
+            // id: listaDeMensagens.length + 1,
             de: 'Felipe',
             texto: novaMensagem, 
-        }
+        };
 
-        setListaMensagens([
-            mensagem,
-            ...listaMensagens,
+        supbabaseClient
+        .from('mensagens')
+        .insert([
+            mensagem
         ])
+        .then(({data}) => {
+            setListaDeMensagens([
+                data[0],
+                ...listaDeMensagens,
+            ])
+
+        });
+
         setMensagem('');
     }
     return (
@@ -50,7 +94,7 @@ export default function ChatPage() {
                     flex: 1,
                     boxShadow: '0 2px 10px 0 rgb(0 0 0 / 20%)',
                     borderRadius: '10px',
-                    backgroundColor: appConfig.theme.colors.neutrals[700],
+                    // backgroundColor: appConfig.theme.colors.neutrals[700],
                     height: '80%',
                     maxWidth: '80%',
                     maxHeight: '80vh',
@@ -64,15 +108,15 @@ export default function ChatPage() {
                         display: 'flex',
                         flex: 1,
                         height: '80%',
-                        backgroundColor: appConfig.theme.colors.neutrals[600],
+                        // backgroundColor: appConfig.theme.colors.neutrals[600],
                         flexDirection: 'column',
                         borderRadius: '5px',
                         padding: '16px',
                     }}
                 >
 
-                    <MessageList mensagens={listaMensagens} />
-                    {/* {listaMensagens.map((mensagemAtual) =>{
+                    <MessageList mensagens={listaDeMensagens} />
+                    {/* {listaDeMensagens.map((mensagemAtual) =>{
                         return(
                             <li key={mensagemAtual.id}>
                                     {mensagemAtual.de}: {mensagemAtual.texto}
@@ -178,7 +222,7 @@ function MessageList(props) {
                             display: 'inline-block',
                             marginRight: '8px',
                         }}
-                        src={`https://github.com/vanessametonini.png`}
+                        src={`https://github.com/${mensagem.de}.png`}
                     />
                     <Text tag="strong">
                         {mensagem.de}
